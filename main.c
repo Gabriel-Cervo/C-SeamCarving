@@ -77,8 +77,7 @@ void load(char *name, Img *pic)
 
 //
 // Implemente AQUI o seu algoritmo
-void seamcarve(int targetWidth)
-{
+void seamcarve(int targetWidth) {
     // Aplica o algoritmo e gera a saida em target->img...
 
     RGB8(*ptrSource)
@@ -90,17 +89,35 @@ void seamcarve(int targetWidth)
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
+    // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++) {
-        // Novo
+        // Preenche pixels no novo width
         for (int x = 0; x < targetW; x++) {
             ptrTarget[y][x].r = ptrTarget[y][x].g = 255;
         }
 
-        // Original
+        // Deixa os pixels no width antigo em preto
         for (int x = targetW; x < target->width; x++) {
             ptrTarget[y][x].r = ptrTarget[y][x].g = 0;
         }
     }
+
+    // // O que fazer com isso?
+    // // Imagem original selecionada
+    // if (sel == 0) {
+
+    // }
+
+    // // Imagem com mask selecionada
+    // if (sel == 1) {
+
+    // }
+
+    // // Imagem de saída selecionada
+    // if (sel == 2) {
+
+    // }
+
     // Chame uploadTexture a cada vez que mudar
     // a imagem (pic[2])
     uploadTexture();
