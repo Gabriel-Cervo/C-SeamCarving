@@ -89,6 +89,58 @@ void seamcarve(int targetWidth) {
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
+    // Armazena a energia de cada pixel
+    int energiaSource[source->height][source->width];
+
+    // Calculo de energia
+    for (int y = 0; y < source->height; y++) {
+            // Pega os indices a serem usados no calculo delta Y
+            // Só é necessário pegar uma vez a cada pixel de altura, pois todos na mesma linha utilizam ele
+            int indexY1 = y + 1;
+            int indexY2 = y - 1;
+
+            // Pega de volta para o topo caso extrapole
+            if (indexY1 > source->height) {
+                indexY1 = 0;
+            }
+
+            // Pega o último caso extrapole
+            if (indexY2 < 0) {
+                indexY2 = source->height;
+            }
+
+        for (int x = 0; x < source->width; x++) {
+            // Pega os indices a serem usados no calculo delta X
+            int index1 = x + 1;
+            int index2 = x - 1;
+        
+            // Pega o primeiro da esquerda caso extrapole
+            if (index1 > source->width) {
+                index1 = 0;
+            }
+
+            // Pega o último da direita caso extrapole
+            if (index2 < 0) {
+                index2 = source->width;
+            }
+
+            // Calculo do deltaX
+            int deltaRx = ptrSource[y][index1].r - ptrSource[y][index2].r;
+            int deltaGx = ptrSource[y][index1].g - ptrSource[y][index2].g;
+            int deltaBx = ptrSource[y][index1].b - ptrSource[y][index2].b;
+            int deltaXFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
+
+            // Calculo do deltaY 
+            deltaRx = ptrSource[indexY1][x].r - ptrSource[indexY2][x].r;
+            deltaGx = ptrSource[indexY1][x].g - ptrSource[indexY2][x].g;
+            deltaBx = ptrSource[indexY1][x].b - ptrSource[indexY2][x].b;
+            int deltaYFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
+
+            energiaSource[y][x] = deltaXFinal + deltaYFinal;
+        }
+    }
+
+
     // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++) {
         // Preenche pixels no novo width
