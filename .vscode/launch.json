@@ -30,7 +30,7 @@
             },
             "setupCommands": [
                 {
-                    "description": "Habilitar a reformatação automática para gdb",
+                    "description": "Habilitar a reformataÃ§Ã£o automÃ¡tica para gdb",
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
