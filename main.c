@@ -81,18 +81,24 @@ void seamcarve(int targetWidth)
 {
     // Aplica o algoritmo e gera a saida em target->img...
 
-    RGB8(*ptr)
-    [target->width] = (RGB8(*)[target->width])target->img;
+    RGB8(*ptrSource)
+    [source->width] = (RGB8(*)[source->width])source->img; // imagem original
+    
+    RGB8(*ptrMask)
+    [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
+    
+    RGB8(*ptrTarget)
+    [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
     for (int y = 0; y < target->height; y++) {
         // Novo
         for (int x = 0; x < targetW; x++) {
-            ptr[y][x].r = ptr[y][x].g = 255;
+            ptrTarget[y][x].r = ptrTarget[y][x].g = 255;
         }
 
         // Original
         for (int x = targetW; x < target->width; x++) {
-            ptr[y][x].r = ptr[y][x].g = 0;
+            ptrTarget[y][x].r = ptrTarget[y][x].g = 0;
         }
     }
     // Chame uploadTexture a cada vez que mudar
