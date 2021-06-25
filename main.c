@@ -130,38 +130,38 @@ void seamcarve(int targetWidth) {
 
 void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
      RGB8(*ptrSource)
-    [source->width] = (RGB8(*)[source->width])source->img; // imagem original
+    [columns] = (RGB8(*)[columns])source->img; // imagem original
 
         // Calculo de energia
-    for (int y = 0; y < source->height; y++) {
+    for (int y = 0; y < rows; y++) {
             // Pega os indices a serem usados no calculo delta Y
             // Só é necessário pegar uma vez a cada pixel de altura, pois todos na mesma linha utilizam ele
             int indexY1 = y + 1;
             int indexY2 = y - 1;
 
             // Pega de volta para o topo caso extrapole
-            if (indexY1 > source->height) {
+            if (indexY1 > rows) {
                 indexY1 = 0;
             }
 
             // Pega o último caso extrapole
             if (indexY2 < 0) {
-                indexY2 = source->height;
+                indexY2 = rows;
             }
 
-        for (int x = 0; x < source->width; x++) {
+        for (int x = 0; x < columns; x++) {
             // Pega os indices a serem usados no calculo delta X
             int index1 = x + 1;
             int index2 = x - 1;
         
             // Pega o primeiro da esquerda caso extrapole
-            if (index1 > source->width) {
+            if (index1 > columns) {
                 index1 = 0;
             }
 
             // Pega o último da direita caso extrapole
             if (index2 < 0) {
-                index2 = source->width;
+                index2 = columns;
             }
 
             // Calculo do deltaX
