@@ -98,7 +98,11 @@ void seamcarve(int targetWidth) {
     for (int i = 0; i < source->height; i++){
 
         for(int j = 0; j < source->width; j++) {
-            
+            if (i == 0){
+                energiaSomada[i][j] = energiaSource[i][j];
+                break;
+            }
+
             if (i == (source->height - 1)) break;
                 if (j > 1) { // Diagonal esquerda
                     if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j - 2]){
@@ -111,6 +115,35 @@ void seamcarve(int targetWidth) {
                         }
                 } 
 
+                if (j == 0){// Valor de baixo 
+                    if((energiaSource[i][j] < energiaSource[i][j + 1])){
+                        energiaSomada[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                    }
+
+                } else if (j > 0 && j < source->width - 1){
+                    if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j + 1]){
+                        energiaSomada[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                    }
+
+                } else if (j == source->width - 1){
+                    if((energiaSource[i][j] < energiaSource[i][j - 1])){
+                        energiaSomada[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                    }
+
+                }
+
+                if (j < source->width - 2) { // Diagonal direita
+                    if (energiaSource[i][j] < energiaSource[i][j + 1] && (energiaSource[i][j] < energiaSource[i][j + 2]){
+                        energiaSomada[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
+                    }
+
+                } else if(j == source->width - 2){ 
+                    if (energiaSource[i][j] < energiaSource[i][j + 1]){
+                            energiaSomada[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
+                        }
+
+                }       
+                          
         }
 
     }
