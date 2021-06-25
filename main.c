@@ -189,7 +189,7 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
             if (i == 0) {
-                matrix[i][j] = matrix[i][j];
+                matrix[i][j] = energiaSource[i][j];
                 break;
             } else if (i == (rows - 1)) {
                 break;
@@ -208,7 +208,7 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
             } 
 
             // Soma do valor de baixo
-            if (j == 0){
+            if (j == 0) {
                 if((energiaSource[i][j] < energiaSource[i][j + 1])) {
                     matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
                 }
