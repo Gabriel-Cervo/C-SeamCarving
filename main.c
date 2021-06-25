@@ -93,6 +93,32 @@ void seamcarve(int targetWidth) {
     int energiaSource[source->height][source->width];
     loadSourceEnergy(source->height, source->width, energiaSource);
 
+    int energiaSomada[source->height][source->width]; 
+
+    for (int i = 0; i < source->height; i++){
+
+        for(int j = 0; j < source->width; j++) {
+            
+            if (i == (source->height - 1)) break;
+                if (j > 1) { // Diagonal esquerda
+                    if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j - 2]){
+                        energiaSomada[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
+                    }
+
+                } else if(j == 1){ 
+                    if (energiaSource[i][j] < energiaSource[i][j - 1]){
+                            energiaSomada[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
+                        }
+                } 
+
+        }
+
+    }
+
+
+
+
+
     // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++) {
         // Preenche pixels no novo width
