@@ -204,7 +204,7 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
             } else if(j == 1){ 
                 if (energiaSource[i][j] < energiaSource[i][j - 1]) {
                         matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
-                    }
+                }
             } 
 
             // Soma do valor de baixo
@@ -219,10 +219,9 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
                 }
 
             } else if (j == columns - 1) {
-                if((energiaSource[i][j] < energiaSource[i][j - 1])){
+                if((energiaSource[i][j] < energiaSource[i][j - 1])) {
                     matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
                 }
-
             }
 
             // Soma da diagonal da direita
@@ -232,9 +231,9 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
                 }
 
             } else if(j == columns - 2) { 
-                if (energiaSource[i][j] < energiaSource[i][j + 1]){
+                if (energiaSource[i][j] < energiaSource[i][j + 1]) {
                         matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
-                    }
+                }
             }                  
         }
     }
