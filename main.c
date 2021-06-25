@@ -46,6 +46,7 @@ void arrow_keys(int a_keys, int x, int y);
 
 // Funções próprias
 void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]);
+void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]);
 
 // Largura e altura da janela
 int width, height;
@@ -94,63 +95,7 @@ void seamcarve(int targetWidth) {
     loadSourceEnergy(source->height, source->width, energiaSource);
 
     int energiaSomada[source->height][source->width]; 
-
-    for (int i = 0; i < source->height; i++){
-
-        for(int j = 0; j < source->width; j++) {
-            if (i == 0){
-                energiaSomada[i][j] = energiaSource[i][j];
-                break;
-            }
-
-            if (i == (source->height - 1)) break;
-                if (j > 1) { // Diagonal esquerda
-                    if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j - 2]){
-                        energiaSomada[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
-                    }
-
-                } else if(j == 1){ 
-                    if (energiaSource[i][j] < energiaSource[i][j - 1]){
-                            energiaSomada[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
-                        }
-                } 
-
-                if (j == 0){// Valor de baixo 
-                    if((energiaSource[i][j] < energiaSource[i][j + 1])){
-                        energiaSomada[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
-                    }
-
-                } else if (j > 0 && j < source->width - 1){
-                    if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j + 1]){
-                        energiaSomada[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
-                    }
-
-                } else if (j == source->width - 1){
-                    if((energiaSource[i][j] < energiaSource[i][j - 1])){
-                        energiaSomada[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
-                    }
-
-                }
-
-                if (j < source->width - 2) { // Diagonal direita
-                    if (energiaSource[i][j] < energiaSource[i][j + 1] && (energiaSource[i][j] < energiaSource[i][j + 2]){
-                        energiaSomada[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
-                    }
-
-                } else if(j == source->width - 2){ 
-                    if (energiaSource[i][j] < energiaSource[i][j + 1]){
-                            energiaSomada[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
-                        }
-
-                }       
-                          
-        }
-
-    }
-
-
-
-
+    loadAcumulatedEnergy(source->height, source->width, energiaSomada, energiaSource);
 
     // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++) {
@@ -236,6 +181,61 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
             int deltaYFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
 
             matrix[y][x] = deltaXFinal + deltaYFinal;
+        }
+    }
+}
+
+void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < columns; j++) {
+            if (i == 0) {
+                matrix[i][j] = matrix[i][j];
+                break;
+            } else if (i == (rows - 1)) {
+                break;
+            }
+
+            // Soma da diagonal da esquerda
+            if (j > 1) {
+                if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j - 2])) {
+                    matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
+                }
+
+            } else if(j == 1){ 
+                if (energiaSource[i][j] < energiaSource[i][j - 1]) {
+                        matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
+                    }
+            } 
+
+            // Soma do valor de baixo
+            if (j == 0){
+                if((energiaSource[i][j] < energiaSource[i][j + 1])) {
+                    matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                }
+
+            } else if (j > 0 && j < columns - 1) {
+                if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j + 1])) {
+                    matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                }
+
+            } else if (j == columns - 1) {
+                if((energiaSource[i][j] < energiaSource[i][j - 1])){
+                    matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                }
+
+            }
+
+            // Soma da diagonal da direita
+            if (j < columns - 2) {
+                if (energiaSource[i][j] < energiaSource[i][j + 1] && (energiaSource[i][j] < energiaSource[i][j + 2])) {
+                    matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
+                }
+
+            } else if(j == columns - 2) { 
+                if (energiaSource[i][j] < energiaSource[i][j + 1]){
+                        matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
+                    }
+            }                  
         }
     }
 }
