@@ -183,57 +183,27 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
 }
 
 void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]) {
+    printf("\n");
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < columns; j++) {
             if (i == 0) {
                 matrix[i][j] = energiaSource[i][j];
-                break;
-            } else if (i == (rows - 1)) {
-                break;
+            } else {
+                int lowestValueInLine = matrix[i-1][j];
+
+                if (j < columns - 1) {
+                    lowestValueInLine = lowestValueInLine > matrix[i-1][j+1] ? matrix[i-1][j+1] : lowestValueInLine;
+                } 
+                
+                if (j > 0) {
+                    lowestValueInLine = lowestValueInLine > matrix[i-1][j-1] ? matrix[i-1][j-1] : lowestValueInLine;
+                }
+
+                matrix[i][j] = lowestValueInLine + energiaSource[i][j];
             }
-
-            // Soma da diagonal da esquerda
-            if (j > 1) {
-                if (matrix[i][j] < matrix[i][j - 1] && (matrix[i][j] < matrix[i][j - 2])) {
-                    matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + matrix[i][j];
-                }
-            } else if(j == 1) { 
-                if (matrix[i][j] < matrix[i][j - 1]) {
-                        matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + matrix[i][j];
-                }
-            } 
-
-            // Soma do valor de baixo
-            if (j == 0) {
-                if (matrix[i][j] < matrix[i][j + 1]) {
-                    matrix[i + 1][j] = energiaSource[i + 1][j] + matrix[i][j];
-                }
-
-            } else if (j > 0 && j < columns - 1) {
-                if (matrix[i][j] < matrix[i][j - 1] && matrix[i][j] < matrix[i][j + 1]) {
-                    matrix[i + 1][j] = energiaSource[i + 1][j] + matrix[i][j];
-                }
-
-            } else if (j == columns - 1) {
-                if(matrix[i][j] < matrix[i][j - 1]) {
-                    matrix[i + 1][j] = energiaSource[i + 1][j] + matrix[i][j];
-                }
-            }
-
-            // Soma da diagonal da direita
-            if (j < columns - 2) {
-                if (matrix[i][j] < matrix[i][j + 1] && (matrix[i][j] < matrix[i][j + 2])) {
-                    matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + matrix[i][j];
-                }
-
-            } else if(j == columns - 2) { 
-                if (matrix[i][j] < matrix[i][j + 1]) {
-                        matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + matrix[i][j];
-                }
-            }
-            printf("%8d, ", matrix[i][j]);                  
-        }
-        printf("\n");
+            printf("%8d, ", matrix[i][j]); 
+        }    
+        printf("\n");             
     }
 }
 
