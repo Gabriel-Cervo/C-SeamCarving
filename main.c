@@ -136,52 +136,49 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
      RGB8(*ptrSource)
     [columns] = (RGB8(*)[columns])source->img; // imagem original
 
-        // Calculo de energia
+    int deltaRx, deltaGx, deltaBx;
+    int deltaRy, deltaGy, deltaBy;
+
     for (int y = 0; y < rows; y++) {
-            // Pega os indices a serem usados no calculo delta Y
-            // Só é necessário pegar uma vez a cada pixel de altura, pois todos na mesma linha utilizam ele
-            int indexY1 = y + 1;
-            int indexY2 = y - 1;
-
-            // Pega de volta para o topo caso extrapole
-            if (indexY1 > rows) {
-                indexY1 = 0;
-            }
-
-            // Pega o último caso extrapole
-            if (indexY2 < 0) {
-                indexY2 = rows;
-            }
-
         for (int x = 0; x < columns; x++) {
-            // Pega os indices a serem usados no calculo delta X
-            int index1 = x + 1;
-            int index2 = x - 1;
-        
-            // Pega o primeiro da esquerda caso extrapole
-            if (index1 > columns) {
-                index1 = 0;
+            if (y == rows - 1) { // caso seja a ultima linha de pixels
+                deltaRy = ptrSource[y-2][x].r - ptrSource[y-1][x].r;
+                deltaGy = ptrSource[y-2][x].g - ptrSource[y-1][x].g;
+                deltaBy = ptrSource[y-2][x].b - ptrSource[y-1][x].b;
+            } else if (y == 0) { // Caso seja a primeira linha
+                deltaRy = ptrSource[y+2][x].r - ptrSource[y+1][x].r;
+                deltaGy = ptrSource[y+2][x].g - ptrSource[y+1][x].g;
+                deltaBy = ptrSource[y+2][x].b - ptrSource[y+1][x].b;
+            } else {
+                deltaRy = ptrSource[y+1][x].r - ptrSource[y-1][x].r;
+                deltaGy = ptrSource[y+1][x].g - ptrSource[y-1][x].g;
+                deltaBy = ptrSource[y+1][x].b - ptrSource[y-1][x].b;
             }
 
-            // Pega o último da direita caso extrapole
-            if (index2 < 0) {
-                index2 = columns;
+            if (x == columns - 1) { // Caso Seja o ultimo pixel da direita
+                deltaRx = ptrSource[y][x-2].r - ptrSource[y][x-1].r;
+                deltaGx = ptrSource[y][x-2].g - ptrSource[y][x-1].g;
+                deltaBx = ptrSource[y][x-2].b - ptrSource[y][x-1].b;
+            } else if (x == 0) { // Caso seja o primeiro da esquerda
+                deltaRx = ptrSource[y][x+2].r - ptrSource[y][x+1].r;
+                deltaGx = ptrSource[y][x+2].g - ptrSource[y][x+1].g;
+                deltaBx = ptrSource[y][x+2].b - ptrSource[y][x+1].b;
+            } else { // Entre os dois
+                deltaRx = ptrSource[y][x+1].r - ptrSource[y][x-1].r;
+                deltaGx = ptrSource[y][x+1].g - ptrSource[y][x-1].g;
+                deltaBx = ptrSource[y][x+1].b - ptrSource[y][x-1].b;
             }
 
             // Calculo do deltaX
-            int deltaRx = ptrSource[y][index1].r - ptrSource[y][index2].r;
-            int deltaGx = ptrSource[y][index1].g - ptrSource[y][index2].g;
-            int deltaBx = ptrSource[y][index1].b - ptrSource[y][index2].b;
             int deltaXFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
 
             // Calculo do deltaY 
-            deltaRx = ptrSource[indexY1][x].r - ptrSource[indexY2][x].r;
-            deltaGx = ptrSource[indexY1][x].g - ptrSource[indexY2][x].g;
-            deltaBx = ptrSource[indexY1][x].b - ptrSource[indexY2][x].b;
-            int deltaYFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
+            int deltaYFinal = (deltaRy * deltaRy) + (deltaGy * deltaGy) + (deltaBy * deltaBy);
 
             matrix[y][x] = deltaXFinal + deltaYFinal;
+            printf("%8d, ", matrix[y][x]);
         }
+        printf("\n");
     }
 }
 
@@ -197,45 +194,46 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
 
             // Soma da diagonal da esquerda
             if (j > 1) {
-                if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j - 2])) {
-                    matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
+                if (matrix[i][j] < matrix[i][j - 1] && (matrix[i][j] < matrix[i][j - 2])) {
+                    matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + matrix[i][j];
                 }
-
-            } else if(j == 1){ 
-                if (energiaSource[i][j] < energiaSource[i][j - 1]) {
-                        matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + energiaSource[i][j];
+            } else if(j == 1) { 
+                if (matrix[i][j] < matrix[i][j - 1]) {
+                        matrix[i + 1][j - 1] = energiaSource[i + 1][j - 1] + matrix[i][j];
                 }
             } 
 
             // Soma do valor de baixo
             if (j == 0) {
-                if((energiaSource[i][j] < energiaSource[i][j + 1])) {
-                    matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                if (matrix[i][j] < matrix[i][j + 1]) {
+                    matrix[i + 1][j] = energiaSource[i + 1][j] + matrix[i][j];
                 }
 
             } else if (j > 0 && j < columns - 1) {
-                if (energiaSource[i][j] < energiaSource[i][j - 1] && (energiaSource[i][j] < energiaSource[i][j + 1])) {
-                    matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                if (matrix[i][j] < matrix[i][j - 1] && matrix[i][j] < matrix[i][j + 1]) {
+                    matrix[i + 1][j] = energiaSource[i + 1][j] + matrix[i][j];
                 }
 
             } else if (j == columns - 1) {
-                if((energiaSource[i][j] < energiaSource[i][j - 1])) {
-                    matrix[i + 1][j] = energiaSource[i + 1][j] + energiaSource[i][j];
+                if(matrix[i][j] < matrix[i][j - 1]) {
+                    matrix[i + 1][j] = energiaSource[i + 1][j] + matrix[i][j];
                 }
             }
 
             // Soma da diagonal da direita
             if (j < columns - 2) {
-                if (energiaSource[i][j] < energiaSource[i][j + 1] && (energiaSource[i][j] < energiaSource[i][j + 2])) {
-                    matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
+                if (matrix[i][j] < matrix[i][j + 1] && (matrix[i][j] < matrix[i][j + 2])) {
+                    matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + matrix[i][j];
                 }
 
             } else if(j == columns - 2) { 
-                if (energiaSource[i][j] < energiaSource[i][j + 1]) {
-                        matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + energiaSource[i][j];
+                if (matrix[i][j] < matrix[i][j + 1]) {
+                        matrix[i + 1][j + 1] = energiaSource[i + 1][j + 1] + matrix[i][j];
                 }
-            }                  
+            }
+            printf("%8d, ", matrix[i][j]);                  
         }
+        printf("\n");
     }
 }
 
