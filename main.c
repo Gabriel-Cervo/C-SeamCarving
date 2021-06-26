@@ -245,21 +245,16 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows]) {
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
-    int count = rows - 1;
-
     // Percorre a imagem de saída preenchendo ela
-    for (int y = 0; y < target->height; y++) {
+    for (int y = target->height - 1; y >= 0; y--) {
         // Preenche a imagem atual
         for (int x = 0; x < targetW; x++) {
-            ptrTarget[y][x].r = ptrSource[y][x].r;
-            ptrTarget[y][x].g = ptrSource[y][x].g;
-            ptrTarget[y][x].b = ptrSource[y][x].b;
+            ptrTarget[y][x] = ptrSource[y][x];
         }
 
-        for (int x = lowestAcumulatedSumPath[count--]; x < targetW - 1; x++) {
-            ptrTarget[y][x].r = ptrTarget[y][x+1].r;
-            ptrTarget[y][x].g = ptrTarget[y][x+1].g;
-            ptrTarget[y][x].b = ptrTarget[y][x+1].b;
+        // Remove as linhas com menor caminho
+        for (int x = lowestAcumulatedSumPath[y]; x < targetW - 1; x++) {
+            ptrTarget[y][x] = ptrTarget[y][x+1];
         }
 
         // // Deixa os pixels no width antigo em preto
