@@ -49,6 +49,7 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]);
 void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]);
 void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]);
 void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumulatedSum[rows][columns]);
+void applyResizing(int rows, int lowestAcumulatedSumPath[rows]);
 
 // Largura e altura da janela
 int width, height;
@@ -86,60 +87,28 @@ void load(char *name, Img *pic)
 void seamcarve(int targetWidth) {
     // Aplica o algoritmo e gera a saida em target->img...
 
-    RGB8(*ptrTarget)
-    [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
-
     // Carrega a soma acumulada de energia
-    int energiaSource[source->height][source->width];
-    loadSourceEnergy(source->height, source->width, energiaSource);
+    int energiaSource[source->height][targetWidth];
+    loadSourceEnergy(source->height, targetWidth, energiaSource);
 
-    int energiaSomada[source->height][source->width];
-    loadAcumulatedEnergy(source->height, source->width, energiaSomada, energiaSource);
+    reduceEnergyInRedMask(source->height, targetWidth, energiaSource);
 
-    reduceEnergyInRedMask(source->height, source->width, energiaSomada);
+    int energiaSomada[source->height][targetWidth];
+    loadAcumulatedEnergy(source->height, targetWidth, energiaSomada, energiaSource);
 
     printf("\n");
     for (int i = 0; i < source->height; i++) {
-        for (int j = 0; j < source->width; j++) {
+        for (int j = 0; j < targetWidth; j++) {
             printf("%8d, ", energiaSomada[i][j]);
         }
         printf("\n");
     }
 
     int lowestAcumulatedSumPath[source->height];
-    findLowestSumPath(source->height, source->width, lowestAcumulatedSumPath, energiaSomada);
+    findLowestSumPath(source->height, targetWidth, lowestAcumulatedSumPath, energiaSomada);
 
-    // Percorre a imagem de saída preenchendo ela
-    for (int y = 0; y < target->height; y++) {
-        // Preenche pixels no novo width
-        for (int x = 0; x < targetW; x++) {
-            ptrTarget[y][x].r = ptrTarget[y][x].g = 255;
-        }
+    applyResizing(source->height, lowestAcumulatedSumPath);
 
-        // Deixa os pixels no width antigo em preto
-        for (int x = targetW; x < target->width; x++) {
-            ptrTarget[y][x].r = ptrTarget[y][x].g = 0;
-        }
-    }
-
-    // // O que fazer com isso?
-    // // Imagem original selecionada
-    // if (sel == 0) {
-
-    // }
-
-    // // Imagem com mask selecionada
-    // if (sel == 1) {
-
-    // }
-
-    // // Imagem de saída selecionada
-    // if (sel == 2) {
-
-    // }
-
-    // Chame uploadTexture a cada vez que mudar
-    // a imagem (pic[2])
     uploadTexture();
     glutPostRedisplay();
 }
@@ -217,15 +186,15 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
 }
 
 void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]) {
-        RGB8(*ptrMask)
+    RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
 
     for (int y = 0; y < rows; y++) {
         for (int x = 0; x < columns; x++) {
             if (ptrMask[y][x].r > 240 && ptrMask[y][x].g < 100) { // Area a remover
-                matrix[y][x] = -2147483646;
+                matrix[y][x] = -2147483;
             } else if (ptrMask[y][x].g > 240 && ptrMask[y][x].r < 100) { // Area a preservar
-                matrix[y][x] = 2147483646;
+                matrix[y][x] = 2147483;
             }
         }
     }
@@ -237,19 +206,20 @@ void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumula
     int lowestAcumulatedSum = acumulatedSum[rows - 1][0];
     int startingIndex = 0;
 
-    for (int j = columns - 1; j > 0; j--) {
+    for (int j = 1; j < columns; j++) {
         if (lowestAcumulatedSum > acumulatedSum[rows - 1][j]) {
             lowestAcumulatedSum = acumulatedSum[rows - 1][j];
             startingIndex = j;
         }
     }
-    outputArray[0] = startingIndex;
+
+    int count = 0;
+
+    outputArray[count++] = startingIndex;
     int lowestIndex = startingIndex;
     int prevIndex = lowestIndex;
 
-    int count = 1;
-
-    for (int i = rows - 1; i > 0; i--) {
+    for (int i = rows - 2; i > 0; i--) {
         int lowestValueOnTop = acumulatedSum[i - 1][prevIndex];
 
         if (prevIndex < columns - 1 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex + 1]) {
@@ -265,6 +235,37 @@ void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumula
         outputArray[count++] = lowestIndex;
         prevIndex = lowestIndex;
         printf("%2d: %2d, ", prevIndex, lowestValueOnTop);
+    }
+}
+
+void applyResizing(int rows, int lowestAcumulatedSumPath[rows]) {
+    RGB8(*ptrSource)
+    [source->width] = (RGB8(*)[source->width])source->img; // imagem original
+
+    RGB8(*ptrTarget)
+    [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
+
+    int count = rows - 1;
+
+    // Percorre a imagem de saída preenchendo ela
+    for (int y = 0; y < target->height; y++) {
+        // Preenche a imagem atual
+        for (int x = 0; x < targetW; x++) {
+            ptrTarget[y][x].r = ptrSource[y][x].r;
+            ptrTarget[y][x].g = ptrSource[y][x].g;
+            ptrTarget[y][x].b = ptrSource[y][x].b;
+        }
+
+        for (int x = lowestAcumulatedSumPath[count--]; x < target->width - 1; x++) {
+            ptrTarget[y][x].r = ptrTarget[y][x+1].r;
+            ptrTarget[y][x].g = ptrTarget[y][x+1].g;
+            ptrTarget[y][x].b = ptrTarget[y][x+1].b;
+        }
+
+        // // Deixa os pixels no width antigo em preto
+        // for (int x = targetW; x < target->width; x++) {
+        //     ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 0;
+        // }
     }
 }
 
