@@ -97,10 +97,8 @@ void seamcarve(int targetWidth) {
             ptrTarget[y][x] = ptrSource[y][x];
         }
     }
-    
-    int widthToMove = abs(target->width - targetWidth);
 
-    for (int i = 0; i < widthToMove; i++) {
+    for (int i = 0; i < 30; i++) { // 10 -> mudança de 10 width a cada chamada seamCarve * 3 (RGB)
         // Carrega a soma acumulada de energia
         int energiaSource[source->height][targetWidth];
         loadSourceEnergy(source->height, targetWidth, energiaSource);
