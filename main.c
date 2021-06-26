@@ -47,6 +47,7 @@ void arrow_keys(int a_keys, int x, int y);
 // Funções próprias
 void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]);
 void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]);
+int[] findLowestSumPath(int rows, int columns, int acumulatedSum[rows][columns]);
 
 // Largura e altura da janela
 int width, height;
@@ -81,12 +82,13 @@ void load(char *name, Img *pic)
 
 //
 // Implemente AQUI o seu algoritmo
-void seamcarve(int targetWidth) {
+void seamcarve(int targetWidth)
+{
     // Aplica o algoritmo e gera a saida em target->img...
-    
+
     RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
-    
+
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
@@ -94,18 +96,23 @@ void seamcarve(int targetWidth) {
     int energiaSource[source->height][source->width];
     loadSourceEnergy(source->height, source->width, energiaSource);
 
-    int energiaSomada[source->height][source->width]; 
+    int energiaSomada[source->height][source->width];
     loadAcumulatedEnergy(source->height, source->width, energiaSomada, energiaSource);
 
+    int[] lowestAcumulatedSumPath = findLowestSumPath(source->height, source->width, energiaSomada);
+
     // Percorre a imagem de saída preenchendo ela
-    for (int y = 0; y < target->height; y++) {
+    for (int y = 0; y < target->height; y++)
+    {
         // Preenche pixels no novo width
-        for (int x = 0; x < targetW; x++) {
+        for (int x = 0; x < targetW; x++)
+        {
             ptrTarget[y][x].r = ptrTarget[y][x].g = 255;
         }
 
         // Deixa os pixels no width antigo em preto
-        for (int x = targetW; x < target->width; x++) {
+        for (int x = targetW; x < target->width; x++)
+        {
             ptrTarget[y][x].r = ptrTarget[y][x].g = 0;
         }
     }
@@ -132,47 +139,60 @@ void seamcarve(int targetWidth) {
     glutPostRedisplay();
 }
 
-void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
-     RGB8(*ptrSource)
+void loadSourceEnergy(int rows, int columns, int matrix[rows][columns])
+{
+    RGB8(*ptrSource)
     [columns] = (RGB8(*)[columns])source->img; // imagem original
 
     int deltaRx, deltaGx, deltaBx;
     int deltaRy, deltaGy, deltaBy;
 
-    for (int y = 0; y < rows; y++) {
-        for (int x = 0; x < columns; x++) {
-            if (y == rows - 1) { // caso seja a ultima linha de pixels
-                deltaRy = ptrSource[y-2][x].r - ptrSource[y-1][x].r;
-                deltaGy = ptrSource[y-2][x].g - ptrSource[y-1][x].g;
-                deltaBy = ptrSource[y-2][x].b - ptrSource[y-1][x].b;
-            } else if (y == 0) { // Caso seja a primeira linha
-                deltaRy = ptrSource[y+2][x].r - ptrSource[y+1][x].r;
-                deltaGy = ptrSource[y+2][x].g - ptrSource[y+1][x].g;
-                deltaBy = ptrSource[y+2][x].b - ptrSource[y+1][x].b;
-            } else {
-                deltaRy = ptrSource[y+1][x].r - ptrSource[y-1][x].r;
-                deltaGy = ptrSource[y+1][x].g - ptrSource[y-1][x].g;
-                deltaBy = ptrSource[y+1][x].b - ptrSource[y-1][x].b;
+    for (int y = 0; y < rows; y++)
+    {
+        for (int x = 0; x < columns; x++)
+        {
+            if (y == rows - 1)
+            { // caso seja a ultima linha de pixels
+                deltaRy = ptrSource[y - 2][x].r - ptrSource[y - 1][x].r;
+                deltaGy = ptrSource[y - 2][x].g - ptrSource[y - 1][x].g;
+                deltaBy = ptrSource[y - 2][x].b - ptrSource[y - 1][x].b;
+            }
+            else if (y == 0)
+            { // Caso seja a primeira linha
+                deltaRy = ptrSource[y + 2][x].r - ptrSource[y + 1][x].r;
+                deltaGy = ptrSource[y + 2][x].g - ptrSource[y + 1][x].g;
+                deltaBy = ptrSource[y + 2][x].b - ptrSource[y + 1][x].b;
+            }
+            else
+            {
+                deltaRy = ptrSource[y + 1][x].r - ptrSource[y - 1][x].r;
+                deltaGy = ptrSource[y + 1][x].g - ptrSource[y - 1][x].g;
+                deltaBy = ptrSource[y + 1][x].b - ptrSource[y - 1][x].b;
             }
 
-            if (x == columns - 1) { // Caso Seja o ultimo pixel da direita
-                deltaRx = ptrSource[y][x-2].r - ptrSource[y][x-1].r;
-                deltaGx = ptrSource[y][x-2].g - ptrSource[y][x-1].g;
-                deltaBx = ptrSource[y][x-2].b - ptrSource[y][x-1].b;
-            } else if (x == 0) { // Caso seja o primeiro da esquerda
-                deltaRx = ptrSource[y][x+2].r - ptrSource[y][x+1].r;
-                deltaGx = ptrSource[y][x+2].g - ptrSource[y][x+1].g;
-                deltaBx = ptrSource[y][x+2].b - ptrSource[y][x+1].b;
-            } else { // Entre os dois
-                deltaRx = ptrSource[y][x+1].r - ptrSource[y][x-1].r;
-                deltaGx = ptrSource[y][x+1].g - ptrSource[y][x-1].g;
-                deltaBx = ptrSource[y][x+1].b - ptrSource[y][x-1].b;
+            if (x == columns - 1)
+            { // Caso Seja o ultimo pixel da direita
+                deltaRx = ptrSource[y][x - 2].r - ptrSource[y][x - 1].r;
+                deltaGx = ptrSource[y][x - 2].g - ptrSource[y][x - 1].g;
+                deltaBx = ptrSource[y][x - 2].b - ptrSource[y][x - 1].b;
+            }
+            else if (x == 0)
+            { // Caso seja o primeiro da esquerda
+                deltaRx = ptrSource[y][x + 2].r - ptrSource[y][x + 1].r;
+                deltaGx = ptrSource[y][x + 2].g - ptrSource[y][x + 1].g;
+                deltaBx = ptrSource[y][x + 2].b - ptrSource[y][x + 1].b;
+            }
+            else
+            { // Entre os dois
+                deltaRx = ptrSource[y][x + 1].r - ptrSource[y][x - 1].r;
+                deltaGx = ptrSource[y][x + 1].g - ptrSource[y][x - 1].g;
+                deltaBx = ptrSource[y][x + 1].b - ptrSource[y][x - 1].b;
             }
 
             // Calculo do deltaX
             int deltaXFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
 
-            // Calculo do deltaY 
+            // Calculo do deltaY
             int deltaYFinal = (deltaRy * deltaRy) + (deltaGy * deltaGy) + (deltaBy * deltaBy);
 
             matrix[y][x] = deltaXFinal + deltaYFinal;
@@ -182,29 +202,83 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
     }
 }
 
-void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]) {
+void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns])
+{
     printf("\n");
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < columns; j++) {
-            if (i == 0) {
+    for (int i = 0; i < rows; i++)
+    {
+        for (int j = 0; j < columns; j++)
+        {
+            if (i == 0)
+            {
                 matrix[i][j] = energiaSource[i][j];
-            } else {
-                int lowestValueInLine = matrix[i-1][j];
+            }
+            else
+            {
+                int lowestValueInLine = matrix[i - 1][j];
 
-                if (j < columns - 1) {
-                    lowestValueInLine = lowestValueInLine > matrix[i-1][j+1] ? matrix[i-1][j+1] : lowestValueInLine;
-                } 
-                
-                if (j > 0) {
-                    lowestValueInLine = lowestValueInLine > matrix[i-1][j-1] ? matrix[i-1][j-1] : lowestValueInLine;
+                if (j < columns - 1)
+                {
+                    lowestValueInLine = lowestValueInLine > matrix[i - 1][j + 1] ? matrix[i - 1][j + 1] : lowestValueInLine;
+                }
+
+                if (j > 0)
+                {
+                    lowestValueInLine = lowestValueInLine > matrix[i - 1][j - 1] ? matrix[i - 1][j - 1] : lowestValueInLine;
                 }
 
                 matrix[i][j] = lowestValueInLine + energiaSource[i][j];
             }
-            printf("%8d, ", matrix[i][j]); 
-        }    
-        printf("\n");             
+            printf("%8d, ", matrix[i][j]);
+        }
+        printf("\n");
     }
+}
+
+int[] findLowestSumPath(int rows, int columns, int acumulatedSum[rows][columns])
+{
+    printf("\n");
+    int[] lowestPath = new int[rows];
+
+    int lowestAcumulatedSum = acumulatedSum[rows - 1][0];
+    int startingIndex = 0;
+
+    for (int j = columns - 1; j > 0; j--)
+    {
+        if (lowestAcumulatedSum > acumulatedSum[rows - 1][j])
+        {
+            lowestAcumulatedSum = acumulatedSum[rows - 1][j];
+            startingIndex = j;
+        }
+    }
+    lowestPath[0] = startingIndex;
+    int lowestIndex = startingIndex;
+    int prevIndex = lowestIndex;
+
+    int count = 1;
+
+    for (int i = rows - 1; i >= 0; i--)
+    {
+        int lowestValueOnTop = acumulatedSum[i - 1][lowestIndex];
+
+        if (lowestIndex < columns - 1 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex + 1])
+        {
+            lowestValueOnTop = acumulatedSum[i - 1][prevIndex + 1];
+            lowestIndex = prevIndex + 1;
+        }
+
+        if (lowestIndex > 0 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex - 1])
+        {
+            lowestValueOnTop = acumulatedSum[i - 1][prevIndex - 1];
+            lowestIndex = prevIndex - 1;
+        }
+
+        lowestPath[count++] = lowestIndex;
+        prevIndex = lowestIndex;
+        printf("%8d, ", lowestIndex);
+    }
+
+    return lowestPath;
 }
 
 void freemem()
