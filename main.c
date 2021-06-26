@@ -256,7 +256,7 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows]) {
             ptrTarget[y][x].b = ptrSource[y][x].b;
         }
 
-        for (int x = lowestAcumulatedSumPath[count--]; x < target->width - 1; x++) {
+        for (int x = lowestAcumulatedSumPath[count--]; x < targetW - 1; x++) {
             ptrTarget[y][x].r = ptrTarget[y][x+1].r;
             ptrTarget[y][x].g = ptrTarget[y][x+1].g;
             ptrTarget[y][x].b = ptrTarget[y][x+1].b;
