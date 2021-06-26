@@ -47,7 +47,7 @@ void arrow_keys(int a_keys, int x, int y);
 // Funções próprias
 void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]);
 void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]);
-int[] findLowestSumPath(int rows, int columns, int acumulatedSum[rows][columns]);
+void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumulatedSum[rows][columns]);
 
 // Largura e altura da janela
 int width, height;
@@ -99,7 +99,14 @@ void seamcarve(int targetWidth)
     int energiaSomada[source->height][source->width];
     loadAcumulatedEnergy(source->height, source->width, energiaSomada, energiaSource);
 
-    int[] lowestAcumulatedSumPath = findLowestSumPath(source->height, source->width, energiaSomada);
+    int lowestAcumulatedSumPath[source->height];
+    findLowestSumPath(source->height, source->width, lowestAcumulatedSumPath, energiaSomada);
+
+    printf("\n");
+
+    for (int i = 0; i < source->height; i++) {
+        printf("%2d, ", lowestAcumulatedSumPath[i]);
+    }
 
     // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++)
@@ -235,11 +242,10 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
     }
 }
 
-int[] findLowestSumPath(int rows, int columns, int acumulatedSum[rows][columns])
+void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumulatedSum[rows][columns])
 {
     printf("\n");
-    int[] lowestPath = new int[rows];
-
+    
     int lowestAcumulatedSum = acumulatedSum[rows - 1][0];
     int startingIndex = 0;
 
@@ -251,34 +257,32 @@ int[] findLowestSumPath(int rows, int columns, int acumulatedSum[rows][columns])
             startingIndex = j;
         }
     }
-    lowestPath[0] = startingIndex;
+    outputArray[0] = startingIndex;
     int lowestIndex = startingIndex;
     int prevIndex = lowestIndex;
 
     int count = 1;
 
-    for (int i = rows - 1; i >= 0; i--)
+    for (int i = rows - 1; i > 0; i--)
     {
-        int lowestValueOnTop = acumulatedSum[i - 1][lowestIndex];
+        int lowestValueOnTop = acumulatedSum[i - 1][prevIndex];
 
-        if (lowestIndex < columns - 1 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex + 1])
+        if (prevIndex < columns - 1 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex + 1])
         {
             lowestValueOnTop = acumulatedSum[i - 1][prevIndex + 1];
             lowestIndex = prevIndex + 1;
         }
 
-        if (lowestIndex > 0 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex - 1])
+        if (prevIndex > 0 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex - 1])
         {
             lowestValueOnTop = acumulatedSum[i - 1][prevIndex - 1];
             lowestIndex = prevIndex - 1;
         }
 
-        lowestPath[count++] = lowestIndex;
+        outputArray[count++] = lowestIndex;
         prevIndex = lowestIndex;
-        printf("%8d, ", lowestIndex);
+        printf("%2d: %2d, ", prevIndex, lowestValueOnTop);
     }
-
-    return lowestPath;
 }
 
 void freemem()
