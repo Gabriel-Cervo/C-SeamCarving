@@ -252,8 +252,8 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows], int newW) {
         for (int x = lowestAcumulatedSumPath[y]; x < newW - 1; x++) {
             ptrTarget[y][x] = ptrTarget[y][x+1];
 
-            // Corta o elefante (?) por algum motivo
-            // ptrMask[y][x] = ptrMask[y][x+1];
+            // RESOLVER: Corta o elefante (?) por algum motivo
+            ptrMask[y][x] = ptrMask[y][x+1];
         }
     }
 }
