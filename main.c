@@ -100,8 +100,6 @@ void seamcarve(int targetWidth) {
             ptrTarget[y][x] = ptrSource[y][x];
         }
     }
-    uploadTexture();   
-
 
     // Aplica o algoritmo
     int widthToMove = abs(target->width - targetWidth);
@@ -116,7 +114,6 @@ void seamcarve(int targetWidth) {
         loadAcumulatedEnergy(target->height, newW, energiaSomada, energiaSource);
         findLowestSumPath(target->height, newW, lowestAcumulatedSumPath, energiaSomada);
         applyResizing(target->height, lowestAcumulatedSumPath, newW);
-        uploadTexture();   
     }
 
     // Deixa os pixels no width antigo em branco
@@ -126,6 +123,7 @@ void seamcarve(int targetWidth) {
             ptrMask[y][x].r = ptrMask[y][x].g = ptrMask[y][x].b = 255;
         }
     }
+
     uploadTexture();   
     glutPostRedisplay();
 }
