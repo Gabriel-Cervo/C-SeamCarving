@@ -98,7 +98,7 @@ void seamcarve(int targetWidth) {
         }
     }
     
-    int widthToMove = abs(target->width - targetWidth) / 3;
+    int widthToMove = abs(target->width - targetWidth);
     int energiaSource[target->height][targetWidth];
     int energiaSomada[target->height][targetWidth];
     int lowestAcumulatedSumPath[target->height];
@@ -110,6 +110,13 @@ void seamcarve(int targetWidth) {
         findLowestSumPath(target->height, targetWidth, lowestAcumulatedSumPath, energiaSomada);
         applyResizing(target->height, lowestAcumulatedSumPath);
         uploadTexture();   
+    }
+
+        // Deixa os pixels no width antigo em branco
+    for (int y = 0; y < target->height; y++) {
+        for (int x = targetWidth; x < target->width; x++) {
+            ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 255;
+        }
     }
     uploadTexture();   
     glutPostRedisplay();
@@ -186,11 +193,17 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
 }
 
 void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]) {
+    RGB8(*ptrTarget)
+    [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
+
     RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
 
     for (int y = 0; y < rows; y++) {
         for (int x = 0; x < columns; x++) {
+            if (ptrTarget[y][x].r == 255 && ptrTarget[y][x].g == 255 && ptrTarget[y][x].b == 255) { break; }
+            if (ptrMask[y][x].r == 255 && ptrMask[y][x].g == 255 && ptrMask[y][x].b == 255) { continue; }
+
             if (ptrMask[y][x].r > 240 && ptrMask[y][x].g < 100) { // Area a remover
                 matrix[y][x] = -21474832;
             } else if (ptrMask[y][x].g > 240 && ptrMask[y][x].r < 100) { // Area a preservar
@@ -246,17 +259,12 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows]) {
 
     // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++) {
-        // Remove as colunas com menor caminho
-
-        ptrMask[y][lowestAcumulatedSumPath[y]].r = ptrMask[y][lowestAcumulatedSumPath[y]].g = ptrMask[y][lowestAcumulatedSumPath[y]].b = 255;
+        // Remove as colunas com menor caminho na mascara
+        // Não funciona (?) e da segmentation fault
+        // ptrMask[y][lowestAcumulatedSumPath[y]].r = ptrMask[y][lowestAcumulatedSumPath[y]].g = ptrMask[y][lowestAcumulatedSumPath[y]].b = 255;
 
         for (int x = lowestAcumulatedSumPath[y]; x < targetW - 1; x++) {
             ptrTarget[y][x] = ptrTarget[y][x+1];
-        }
-
-        // Deixa os pixels no width antigo em branco
-        for (int x = targetW; x < target->width; x++) {
-            ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 255;
         }
     }
 }
