@@ -46,6 +46,7 @@ void arrow_keys(int a_keys, int x, int y);
 
 // Funções próprias
 void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]);
+void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]);
 void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]);
 void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumulatedSum[rows][columns]);
 void applyResizing(int rows, int lowestAcumulatedSumPath[rows], int newW);
@@ -93,15 +94,17 @@ void seamcarve(int targetWidth) {
     RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
     
-    // Aplica o algoritmo e gera a saida em target->img...
+    // Copia imagem original na saida
     for (int y = 0; y < source->height; y++) {
         for (int x = 0; x < source->width; x++) {
             ptrTarget[y][x] = ptrSource[y][x];
         }
     }
+    uploadTexture();   
 
+
+    // Aplica o algoritmo
     int widthToMove = abs(target->width - targetWidth);
-
     for (int i = 0; i < widthToMove; i++) {
         int newW = target->width - i - 1;
         int energiaSource[target->height][newW];
@@ -109,13 +112,14 @@ void seamcarve(int targetWidth) {
         int lowestAcumulatedSumPath[target->height];
         
         loadSourceEnergy(target->height, newW, energiaSource);
+        reduceEnergyInRedMask(target->height, newW, energiaSource);
         loadAcumulatedEnergy(target->height, newW, energiaSomada, energiaSource);
         findLowestSumPath(target->height, newW, lowestAcumulatedSumPath, energiaSomada);
         applyResizing(target->height, lowestAcumulatedSumPath, newW);
+        uploadTexture();   
     }
-    uploadTexture();   
 
-        // Deixa os pixels no width antigo em branco
+    // Deixa os pixels no width antigo em branco
     for (int y = 0; y < target->height; y++) {
         for (int x = targetWidth; x < target->width; x++) {
             ptrTarget[y][x].r = ptrTarget[y][x].g = ptrTarget[y][x].b = 255;
@@ -138,47 +142,41 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]) {
 
     for (int y = 0; y < rows; y++) {
         for (int x = 0; x < columns; x++) {
-            if (ptrMask[y][x].g >= 0 && ptrMask[y][x].g <= 100 &&  ptrMask[y][x].r >= 170) { // Area a remover
-                matrix[y][x] = -2147483;
-            } else if (ptrMask[y][x].r >= 0 && ptrMask[y][x].r <= 100 &&  ptrMask[y][x].g >= 170) { // Area a preservar
-                matrix[y][x] = 2147483;
+            if (y == rows - 1) { // caso seja a ultima linha de pixels
+                deltaRy = ptrTarget[y - 2][x].r - ptrTarget[y - 1][x].r;
+                deltaGy = ptrTarget[y - 2][x].g - ptrTarget[y - 1][x].g;
+                deltaBy = ptrTarget[y - 2][x].b - ptrTarget[y - 1][x].b;
+            } else if (y == 0) { // Caso seja a primeira linha
+                deltaRy = ptrTarget[y + 2][x].r - ptrTarget[y + 1][x].r;
+                deltaGy = ptrTarget[y + 2][x].g - ptrTarget[y + 1][x].g;
+                deltaBy = ptrTarget[y + 2][x].b - ptrTarget[y + 1][x].b;
             } else {
-                if (y == rows - 1) { // caso seja a ultima linha de pixels
-                    deltaRy = ptrTarget[y - 2][x].r - ptrTarget[y - 1][x].r;
-                    deltaGy = ptrTarget[y - 2][x].g - ptrTarget[y - 1][x].g;
-                    deltaBy = ptrTarget[y - 2][x].b - ptrTarget[y - 1][x].b;
-                } else if (y == 0) { // Caso seja a primeira linha
-                    deltaRy = ptrTarget[y + 2][x].r - ptrTarget[y + 1][x].r;
-                    deltaGy = ptrTarget[y + 2][x].g - ptrTarget[y + 1][x].g;
-                    deltaBy = ptrTarget[y + 2][x].b - ptrTarget[y + 1][x].b;
-                } else {
-                    deltaRy = ptrTarget[y + 1][x].r - ptrTarget[y - 1][x].r;
-                    deltaGy = ptrTarget[y + 1][x].g - ptrTarget[y - 1][x].g;
-                    deltaBy = ptrTarget[y + 1][x].b - ptrTarget[y - 1][x].b;
-                }
-
-                if (x == columns - 1) { // Caso Seja o ultimo pixel da direita
-                    deltaRx = ptrTarget[y][x - 2].r - ptrTarget[y][x - 1].r;
-                    deltaGx = ptrTarget[y][x - 2].g - ptrTarget[y][x - 1].g;
-                    deltaBx = ptrTarget[y][x - 2].b - ptrTarget[y][x - 1].b;
-                } else if (x == 0) { // Caso seja o primeiro da esquerda
-                    deltaRx = ptrTarget[y][x + 2].r - ptrTarget[y][x + 1].r;
-                    deltaGx = ptrTarget[y][x + 2].g - ptrTarget[y][x + 1].g;
-                    deltaBx = ptrTarget[y][x + 2].b - ptrTarget[y][x + 1].b;
-                } else { // Entre os dois
-                    deltaRx = ptrTarget[y][x + 1].r - ptrTarget[y][x - 1].r;
-                    deltaGx = ptrTarget[y][x + 1].g - ptrTarget[y][x - 1].g;
-                    deltaBx = ptrTarget[y][x + 1].b - ptrTarget[y][x - 1].b;
-                }
-
-                // Calculo do deltaX
-                int deltaXFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
-
-                // Calculo do deltaY
-                int deltaYFinal = (deltaRy * deltaRy) + (deltaGy * deltaGy) + (deltaBy * deltaBy);
-
-                matrix[y][x] = deltaXFinal + deltaYFinal;
+                deltaRy = ptrTarget[y + 1][x].r - ptrTarget[y - 1][x].r;
+                deltaGy = ptrTarget[y + 1][x].g - ptrTarget[y - 1][x].g;
+                deltaBy = ptrTarget[y + 1][x].b - ptrTarget[y - 1][x].b;
             }
+
+            if (x == columns - 1) { // Caso Seja o ultimo pixel da direita
+                deltaRx = ptrTarget[y][x - 2].r - ptrTarget[y][x - 1].r;
+                deltaGx = ptrTarget[y][x - 2].g - ptrTarget[y][x - 1].g;
+                deltaBx = ptrTarget[y][x - 2].b - ptrTarget[y][x - 1].b;
+            } else if (x == 0) { // Caso seja o primeiro da esquerda
+                deltaRx = ptrTarget[y][x + 2].r - ptrTarget[y][x + 1].r;
+                deltaGx = ptrTarget[y][x + 2].g - ptrTarget[y][x + 1].g;
+                deltaBx = ptrTarget[y][x + 2].b - ptrTarget[y][x + 1].b;
+            } else { // Entre os dois
+                deltaRx = ptrTarget[y][x + 1].r - ptrTarget[y][x - 1].r;
+                deltaGx = ptrTarget[y][x + 1].g - ptrTarget[y][x - 1].g;
+                deltaBx = ptrTarget[y][x + 1].b - ptrTarget[y][x - 1].b;
+            }
+
+            // Calculo do deltaX
+            int deltaXFinal = (deltaRx * deltaRx) + (deltaGx * deltaGx) + (deltaBx * deltaBx);
+
+            // Calculo do deltaY
+            int deltaYFinal = (deltaRy * deltaRy) + (deltaGy * deltaGy) + (deltaBy * deltaBy);
+
+            matrix[y][x] = deltaXFinal + deltaYFinal;
         }
     }
 }
@@ -204,6 +202,21 @@ void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int 
         }
     }
 }
+
+void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]) {
+     RGB8(*ptrMask)
+     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
+
+     for (int y = 0; y < rows; y++) {
+         for (int x = 0; x < columns; x++) {
+             if (ptrMask[y][x].r > 170 && ptrMask[y][x].g <= 30 && ptrMask[y][x].g <= 30) { // Area a remover
+                 matrix[y][x] -= 999999;
+             } else if (ptrMask[y][x].g >= 170 && ptrMask[y][x].r <= 30 && ptrMask[y][x].g <= 30) { // Area a preservar
+                 matrix[y][x] += 999999;
+             }
+         }
+     }
+ }
 
 void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumulatedSum[rows][columns]) {
     int lowestAcumulatedSum = acumulatedSum[rows - 1][0];
