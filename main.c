@@ -96,8 +96,8 @@ void seamcarve(int targetWidth) {
     RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
     
-    // Copia imagem original na saida
     if (firstSeam == 1) {
+        // Copia imagem original na saida somente na primeita iteração
         for (int y = 0; y < source->height; y++) {
             for (int x = 0; x < targetWidth; x++) {
                 ptrTarget[y][x] = ptrSource[y][x];
@@ -210,6 +210,7 @@ void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]) {
      for (int y = 0; y < rows; y++) {
          for (int x = 0; x < columns; x++) {
              if (ptrMask[y][x].r > 170) { // Area a remover
+                // Necessário usar um outro if embaixo por algum motivo se não para de funcionar (Obrigado Gabi)
                 if (ptrMask[y][x].g <= 30 && ptrMask[y][x].b <= 30) {
                     matrix[y][x] -= 799999;
                 }
@@ -264,7 +265,7 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows], int newW) {
     RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
 
-    // Percorre a imagem de saída preenchendo ela
+    // Corta o pixel com menor soma acumulada de cada linha
     for (int y = 0; y < target->height; y++) {
         for (int x = lowestAcumulatedSumPath[y]; x < newW - 1; x++) {
             ptrTarget[y][x] = ptrTarget[y][x+1];
