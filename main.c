@@ -86,36 +86,32 @@ void load(char *name, Img *pic)
 // Implemente AQUI o seu algoritmo
 void seamcarve(int targetWidth) {
     RGB8(*ptrSource)
-    [source->width] = (RGB8(*)[source->width])source->img; // imagem de saida
+    [source->width] = (RGB8(*)[source->width])source->img; // imagem de entrada
 
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
     
     // Aplica o algoritmo e gera a saida em target->img...
     for (int y = 0; y < source->height; y++) {
-        for (int x = 0; x < targetW; x++) {
+        for (int x = 0; x < targetWidth; x++) {
             ptrTarget[y][x] = ptrSource[y][x];
         }
     }
-
-    for (int i = 0; i < 30; i++) { // 10 -> mudança de 10 width a cada chamada seamCarve * 3 (RGB)
-        // Carrega a soma acumulada de energia
-        int energiaSource[source->height][targetWidth];
-        loadSourceEnergy(source->height, targetWidth, energiaSource);
-
-        reduceEnergyInRedMask(source->height, targetWidth, energiaSource);
-
-        int energiaSomada[source->height][targetWidth];
-        loadAcumulatedEnergy(source->height, targetWidth, energiaSomada, energiaSource);
-
-        int lowestAcumulatedSumPath[source->height];
-        findLowestSumPath(source->height, targetWidth, lowestAcumulatedSumPath, energiaSomada);
-
-        applyResizing(source->height, lowestAcumulatedSumPath);
-
+    
+    int widthToMove = abs(target->width - targetWidth) / 3;
+    int energiaSource[target->height][targetWidth];
+    int energiaSomada[target->height][targetWidth];
+    int lowestAcumulatedSumPath[target->height];
+    
+    for (int i = 0; i < widthToMove; i++) {
+        loadSourceEnergy(target->height, targetWidth, energiaSource);
+        reduceEnergyInRedMask(target->height, targetWidth, energiaSource);
+        loadAcumulatedEnergy(target->height, targetWidth, energiaSomada, energiaSource);
+        findLowestSumPath(target->height, targetWidth, lowestAcumulatedSumPath, energiaSomada);
+        applyResizing(target->height, lowestAcumulatedSumPath);
         uploadTexture();   
     }
-
+    uploadTexture();   
     glutPostRedisplay();
 }
 
@@ -196,9 +192,9 @@ void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]) {
     for (int y = 0; y < rows; y++) {
         for (int x = 0; x < columns; x++) {
             if (ptrMask[y][x].r > 240 && ptrMask[y][x].g < 100) { // Area a remover
-                matrix[y][x] = -2147483;
+                matrix[y][x] = -21474832;
             } else if (ptrMask[y][x].g > 240 && ptrMask[y][x].r < 100) { // Area a preservar
-                matrix[y][x] = 2147483;
+                matrix[y][x] = 21474832;
             }
         }
     }
@@ -215,9 +211,9 @@ void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumula
         }
     }
 
-    int count = 0;
+    int count = rows - 1;
 
-    outputArray[count++] = startingIndex;
+    outputArray[count--] = startingIndex;
     int lowestIndex = startingIndex;
     int prevIndex = lowestIndex;
 
@@ -234,7 +230,7 @@ void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumula
             lowestIndex = prevIndex - 1;
         }
 
-        outputArray[count++] = lowestIndex;
+        outputArray[count--] = lowestIndex;
         prevIndex = lowestIndex;
     }
 }
@@ -243,12 +239,18 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows]) {
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
+    RGB8(*ptrMask)
+    [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
+
     int count = 0;
 
     // Percorre a imagem de saída preenchendo ela
-    for (int y = target->height - 1; y >= 0; y--) {
-        // Remove as linhas com menor caminho
-        for (int x = lowestAcumulatedSumPath[count++]; x < targetW - 1; x++) {
+    for (int y = 0; y < target->height; y++) {
+        // Remove as colunas com menor caminho
+
+        ptrMask[y][lowestAcumulatedSumPath[y]].r = ptrMask[y][lowestAcumulatedSumPath[y]].g = ptrMask[y][lowestAcumulatedSumPath[y]].b = 255;
+
+        for (int x = lowestAcumulatedSumPath[y]; x < targetW - 1; x++) {
             ptrTarget[y][x] = ptrTarget[y][x+1];
         }
 
