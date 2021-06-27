@@ -57,6 +57,8 @@ int width, height;
 // Largura desejada (selecionável)
 int targetW;
 
+int firstSeam = 1;
+
 // Identificadores de textura
 GLuint tex[3];
 
@@ -95,26 +97,26 @@ void seamcarve(int targetWidth) {
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
     
     // Copia imagem original na saida
-    for (int y = 0; y < source->height; y++) {
-        for (int x = 0; x < source->width; x++) {
-            ptrTarget[y][x] = ptrSource[y][x];
+    if (firstSeam == 1) {
+        for (int y = 0; y < source->height; y++) {
+            for (int x = 0; x < targetWidth; x++) {
+                ptrTarget[y][x] = ptrSource[y][x];
+            }
         }
+
+        firstSeam = 0;
     }
 
-    // Aplica o algoritmo
-    int widthToMove = abs(target->width - targetWidth);
-    for (int i = 0; i < widthToMove; i++) {
-        int newW = target->width - i - 1;
-        int energiaSource[target->height][newW];
-        int energiaSomada[target->height][newW];
-        int lowestAcumulatedSumPath[target->height];
-        
-        loadSourceEnergy(target->height, newW, energiaSource);
-        reduceEnergyInRedMask(target->height, newW, energiaSource);
-        loadAcumulatedEnergy(target->height, newW, energiaSomada, energiaSource);
-        findLowestSumPath(target->height, newW, lowestAcumulatedSumPath, energiaSomada);
-        applyResizing(target->height, lowestAcumulatedSumPath, newW);
-    }
+
+    int energiaSource[target->height][targetWidth];
+    int energiaSomada[target->height][targetWidth];
+    int lowestAcumulatedSumPath[target->height];
+    
+    loadSourceEnergy(target->height, targetWidth, energiaSource);
+    reduceEnergyInRedMask(target->height, targetWidth, energiaSource);
+    loadAcumulatedEnergy(target->height, targetWidth, energiaSomada, energiaSource);
+    findLowestSumPath(target->height, targetWidth, lowestAcumulatedSumPath, energiaSomada);
+    applyResizing(target->height, lowestAcumulatedSumPath, targetWidth);
 
     // Deixa os pixels no width antigo em branco
     for (int y = 0; y < target->height; y++) {
@@ -207,10 +209,14 @@ void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]) {
 
      for (int y = 0; y < rows; y++) {
          for (int x = 0; x < columns; x++) {
-             if (ptrMask[y][x].r > 170 && ptrMask[y][x].g <= 30 && ptrMask[y][x].g <= 30) { // Area a remover
-                 matrix[y][x] -= 999999;
-             } else if (ptrMask[y][x].g >= 170 && ptrMask[y][x].r <= 30 && ptrMask[y][x].g <= 30) { // Area a preservar
-                 matrix[y][x] += 999999;
+             if (ptrMask[y][x].r > 170) { // Area a remover
+                if (ptrMask[y][x].g <= 30 && ptrMask[y][x].b <= 30) {
+                    matrix[y][x] -= 799999;
+                }
+             } else if (ptrMask[y][x].g >= 170) { // Area a preservar
+                if (ptrMask[y][x].r <= 30 && ptrMask[y][x].b <= 30) {
+                    matrix[y][x] += 799999;
+                }
              }
          }
      }
@@ -262,8 +268,6 @@ void applyResizing(int rows, int lowestAcumulatedSumPath[rows], int newW) {
     for (int y = 0; y < target->height; y++) {
         for (int x = lowestAcumulatedSumPath[y]; x < newW - 1; x++) {
             ptrTarget[y][x] = ptrTarget[y][x+1];
-
-            // RESOLVER: Corta o elefante (?) por algum motivo
             ptrMask[y][x] = ptrMask[y][x+1];
         }
     }
@@ -391,13 +395,13 @@ void arrow_keys(int a_keys, int x, int y)
     switch (a_keys)
     {
     case GLUT_KEY_RIGHT:
-        if (targetW <= pic[2].width - 10)
-            targetW += 10;
+        if (targetW <= pic[2].width - 1)
+            targetW += 1;
         seamcarve(targetW);
         break;
     case GLUT_KEY_LEFT:
-        if (targetW > 10)
-            targetW -= 10;
+        if (targetW > 1)
+            targetW -= 1;
         seamcarve(targetW);
         break;
     default:
