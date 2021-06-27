@@ -49,7 +49,7 @@ void loadSourceEnergy(int rows, int columns, int matrix[rows][columns]);
 void loadAcumulatedEnergy(int rows, int columns, int matrix[rows][columns], int energiaSource[rows][columns]);
 void reduceEnergyInRedMask(int rows, int columns, int matrix[rows][columns]);
 void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumulatedSum[rows][columns]);
-void applyResizing(int rows, int lowestAcumulatedSumPath[rows]);
+void applyResizing(int rows, int lowestAcumulatedSumPath[rows], int newW);
 
 // Largura e altura da janela
 int width, height;
@@ -93,22 +93,26 @@ void seamcarve(int targetWidth) {
     
     // Aplica o algoritmo e gera a saida em target->img...
     for (int y = 0; y < source->height; y++) {
-        for (int x = 0; x < targetWidth; x++) {
+        for (int x = 0; x < source->width; x++) {
             ptrTarget[y][x] = ptrSource[y][x];
         }
     }
-    
+
     int widthToMove = abs(target->width - targetWidth);
-    int energiaSource[target->height][targetWidth];
-    int energiaSomada[target->height][targetWidth];
-    int lowestAcumulatedSumPath[target->height];
     
     for (int i = 0; i < widthToMove; i++) {
-        loadSourceEnergy(target->height, targetWidth, energiaSource);
-        reduceEnergyInRedMask(target->height, targetWidth, energiaSource);
-        loadAcumulatedEnergy(target->height, targetWidth, energiaSomada, energiaSource);
-        findLowestSumPath(target->height, targetWidth, lowestAcumulatedSumPath, energiaSomada);
-        applyResizing(target->height, lowestAcumulatedSumPath);
+        int newW = target->width - i - 1;
+        int energiaSource[target->height][newW];
+        int energiaSomada[target->height][newW];
+        int lowestAcumulatedSumPath[target->height];
+
+        printf("%2d, ", target->width - i);
+        printf("\n");
+        loadSourceEnergy(target->height, newW, energiaSource);
+        reduceEnergyInRedMask(target->height, newW, energiaSource);
+        loadAcumulatedEnergy(target->height, newW, energiaSomada, energiaSource);
+        findLowestSumPath(target->height, newW, lowestAcumulatedSumPath, energiaSomada);
+        applyResizing(target->height, lowestAcumulatedSumPath, newW);
         uploadTexture();   
     }
 
@@ -230,7 +234,7 @@ void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumula
     int lowestIndex = startingIndex;
     int prevIndex = lowestIndex;
 
-    for (int i = rows - 2; i > 0; i--) {
+    for (int i = rows - 1; i > 0; i--) {
         int lowestValueOnTop = acumulatedSum[i - 1][prevIndex];
 
         if (prevIndex < columns - 1 && lowestValueOnTop > acumulatedSum[i - 1][prevIndex + 1]) {
@@ -244,26 +248,30 @@ void findLowestSumPath(int rows, int columns, int outputArray[rows], int acumula
         }
 
         outputArray[count--] = lowestIndex;
+        // printf("LOWEST: %2d, ", lowestIndex);
+        // printf("\n");
+        // printf("\n");
         prevIndex = lowestIndex;
     }
 }
 
-void applyResizing(int rows, int lowestAcumulatedSumPath[rows]) {
+void applyResizing(int rows, int lowestAcumulatedSumPath[rows], int newW) {
     RGB8(*ptrTarget)
     [target->width] = (RGB8(*)[target->width])target->img; // imagem de saida
 
     RGB8(*ptrMask)
     [mask->width] = (RGB8(*)[mask->width])mask->img; // imagem com mask
 
-    int count = 0;
-
     // Percorre a imagem de saída preenchendo ela
     for (int y = 0; y < target->height; y++) {
         // Remove as colunas com menor caminho na mascara
         // Não funciona (?) e da segmentation fault
-        // ptrMask[y][lowestAcumulatedSumPath[y]].r = ptrMask[y][lowestAcumulatedSumPath[y]].g = ptrMask[y][lowestAcumulatedSumPath[y]].b = 255;
+        ptrMask[y][lowestAcumulatedSumPath[y]].r = ptrMask[y][lowestAcumulatedSumPath[y]].g = ptrMask[y][lowestAcumulatedSumPath[y]].b = 255;
 
-        for (int x = lowestAcumulatedSumPath[y]; x < targetW - 1; x++) {
+        for (int x = lowestAcumulatedSumPath[y]; x < newW - 1; x++) {
+            // printf("X: %2d, ", lowestAcumulatedSumPath[y]);
+            // printf("\n");
+            // printf("\n");
             ptrTarget[y][x] = ptrTarget[y][x+1];
         }
     }
