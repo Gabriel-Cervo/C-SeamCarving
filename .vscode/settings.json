@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "math.h": "c",
-        "glut.h": "c"
+        "glut.h": "c",
+        "atomic": "c",
+        "bitset": "c"
     },
     "cmake.configureOnOpen": false
 }
